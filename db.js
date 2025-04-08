@@ -1,18 +1,13 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-const db = mysql.createConnection({
+const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
-  password: 'admin123', // ⚠️ Cámbiala por la tuya
-  database: 'transpoli_db'
+  password: 'admin123',
+  database: 'transpoli_db',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect(err => {
-  if (err) {
-    console.error('❌ Error al conectar a MySQL:', err);
-  } else {
-    console.log('✅ Conexión a MySQL exitosa');
-  }
-});
-
-module.exports = db;
+module.exports = pool;

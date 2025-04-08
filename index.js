@@ -1,17 +1,24 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const puerto = 3000;
 
-// Middleware
+const usuariosRoutes = require('./routes/usuarios'); 
+const rutasProtegidas = require('./routes/rutasProtegidas');
+const rutasRouter = require('./routes/rutas');
+const ubicacionesRoutes = require('./routes/ubicaciones');
+
 app.use(cors());
 app.use(express.json());
 
-// Rutas
-const usuariosRoutes = require('./routes/usuarios');
-app.use('/api/usuarios', usuariosRoutes); // ¡Esto conecta correctamente la ruta!
+app.use('/api', usuariosRoutes);
+app.use('/api', rutasProtegidas);
+app.use('/api/rutas', rutasRouter);
+app.use('/api/ubicaciones', ubicacionesRoutes);
 
-// Servidor
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+
+app.listen(puerto, () => {
+  console.log(`Servidor corriendo en http://localhost:${puerto}`);
 });
