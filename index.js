@@ -8,7 +8,6 @@ const puerto = 3000;
 const usuariosRoutes = require('./routes/usuarios'); 
 const rutasProtegidas = require('./routes/rutasProtegidas');
 const rutasRouter = require('./routes/rutas');
-const ubicacionesRoutes = require('./routes/ubicaciones');
 
 app.use(cors());
 app.use(express.json());
@@ -16,7 +15,6 @@ app.use(express.json());
 app.use('/api', usuariosRoutes);
 app.use('/api', rutasProtegidas);
 app.use('/api/rutas', rutasRouter);
-app.use('/api/ubicaciones', ubicacionesRoutes);
 
 
 app.listen(puerto, () => {
