@@ -1,67 +1,33 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
-const jwt = require('jsonwebtoken');
+const pool = require('../db');
 
-// Endpoint de registro
-router.post('/register', (req, res) => {
-  const { nombre, correo, contrasena, rol } = req.body;
+// Registro de usuarios
+router.post('/register', async (req, res) => {
+  try {
+    const { nombre, correo, contrasena, rol } = req.body;
 
-  if (!nombre || !correo || !contrasena || !rol) {
-    return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
-  }
-
-  const query = 'INSERT INTO usuarios (nombre, correo, contrasena, rol) VALUES (?, ?, ?, ?)';
-  db.query(query, [nombre, correo, contrasena, rol], (err, result) => {
-    if (err) {
-      console.error('Error al registrar usuario:', err);
-      return res.status(500).json({ mensaje: 'Error en el servidor' });
+    // Validación de campos vacíos
+    if (!nombre || !correo || !contrasena || !rol) {
+      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
     }
+
+    // Verificar si el correo ya está registrado
+    const [existente] = await pool.query('SELECT id FROM usuarios WHERE correo = ?', [correo]);
+
+    if (existente.length > 0) {
+      return res.status(409).json({ mensaje: 'El correo ya está registrado' });
+    }
+
+    // Insertar usuario
+    const query = 'INSERT INTO usuarios (nombre, correo, contrasena, rol) VALUES (?, ?, ?, ?)';
+    await pool.query(query, [nombre, correo, contrasena, rol]);
 
     res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
-  });
-});
-
-// Endpoint de login
-router.post('/login', (req, res) => {
-  const { correo, contrasena } = req.body;
-
-  if (!correo || !contrasena) {
-    return res.status(400).json({ mensaje: 'Correo y contraseña son obligatorios' });
+  } catch (error) {
+    console.error('Error al registrar usuario:', error);
+    res.status(500).json({ mensaje: 'Error en el servidor' });
   }
-
-  const query = 'SELECT * FROM usuarios WHERE correo = ? AND contrasena = ?';
-  db.query(query, [correo, contrasena], (err, results) => {
-    if (err) return res.status(500).json({ mensaje: 'Error en el servidor' });
-
-    if (results.length === 0) {
-      return res.status(401).json({ mensaje: 'Credenciales inválidas' });
-    }
-
-    const usuario = results[0];
-
-    const token = jwt.sign(
-      {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        rol: usuario.rol,
-        correo: usuario.correo
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.json({
-      mensaje: 'Inicio de sesión exitoso',
-      token,
-      usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        correo: usuario.correo,
-        rol: usuario.rol
-      }
-    });
-  });
 });
 
 module.exports = router;

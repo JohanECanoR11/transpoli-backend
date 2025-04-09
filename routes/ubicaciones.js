@@ -47,4 +47,28 @@ router.get('/:ruta_id/ultima', async (req, res) => {
     }
 });
 
+// Obtener última ubicación de todas las rutas activas
+router.get('/todas/ultimas', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT r.id AS ruta_id, r.nombre, u.latitud, u.longitud, u.fecha_hora
+      FROM rutas r
+      LEFT JOIN (
+        SELECT ruta_id, latitud, longitud, fecha_hora
+        FROM ubicaciones
+        WHERE (ruta_id, fecha_hora) IN (
+          SELECT ruta_id, MAX(fecha_hora)
+          FROM ubicaciones
+          GROUP BY ruta_id
+        )
+      ) u ON r.id = u.ruta_id
+    `);
+    
+    res.json(rows); // ← corregido
+  } catch (error) {
+    console.error('Error al obtener ubicaciones:', error);
+    res.status(500).json({ mensaje: 'Error al obtener ubicaciones de rutas' });
+  }
+});
+
 module.exports = router;
